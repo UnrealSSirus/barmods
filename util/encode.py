@@ -164,7 +164,7 @@ def build_bset_command(file_args: list[str], mods_dir: Path) -> tuple[str, list[
     payloads = [_encode_payload(p.read_bytes()) for p in resolved]
     cmd = "!bset"
     for i, payload in enumerate(payloads, start=1):
-        mod_priority = 9 if file_args[i-1].startswith("attribute-resolver") else 1
+        mod_priority = 8 if file_args[i-1].startswith("attribute-resolver") else 1
         if(file_args[i-1].startswith("prefix-pack1")):
             mod_priority = 5
         print(f"Mod {i} size: {len(payload)} characters", file=sys.stderr)

@@ -1,8 +1,149 @@
--- Attributes Resolver v1.0
+-- Attributes Resolver v1.3
+local function parse_all_stats_factors(v)
+    -- Accept number | string (space-separated) | table (numbers/strings).
+    local factors = {}
+    local function push(x)
+        local n = tonumber(x)
+        if n then
+            table.insert(factors, n)
+        end
+    end
+
+    if type(v) == 'number' then
+        push(v)
+    elseif type(v) == 'string' then
+        for token in string.gmatch(v, "%S+") do
+            push(token)
+        end
+    elseif type(v) == 'table' then
+        for _, x in ipairs(v) do
+            push(x)
+        end
+    end
+
+    return factors
+end
+
+local SOLAR_UPKEEP_UNITS = "|armadvsol|legsolar|corsolar|armsolar|legadvsol|coradvsol|" -- temp test
+
+local function scale_all_stats(name, unit, factor)
+    if type(factor) ~= 'number' then return end
+    if factor == 1 then return end
+    if factor == 0 then return end
+    local inv = 1 / factor
+    local u = unit
+    local ceil = math.ceil
+    local function mul(k, m)
+        local v = u[k]
+        if type(v) == 'number' then u[k] = v * m end
+    end
+    local function mulceil(k, m)
+        local v = u[k]
+        if type(v) == 'number' then u[k] = ceil(v * m) end
+    end
+
+    -- Basic stats
+    mulceil('health', factor)
+    for _, k in ipairs({
+        'sightdistance','radardistance','sonardistance','seismicdistance','radardistancejam',
+        'workertime','builddistance','turnrate','capturespeed','autoheal','idleautoheal',
+    }) do
+        mul(k, factor)
+    end
+    mul('speed', factor * 0.5)
+    mulceil('cloakcost', 1 - factor)
+    mulceil('cloakcostmoving', 1 - factor)
+    if u.footprintx and u.footprintz then
+        u.footprintx = ceil(u.footprintx / factor)
+        u.footprintz = ceil(u.footprintz / factor)
+    end
+
+    -- Economy Stats
+    for _, k in ipairs({'energystorage','metalstorage','energymake','windgenerator','extractsmetal'}) do
+        mul(k, factor)
+    end
+    local eu = u.energyupkeep
+    if type(eu) == 'number' then
+        if eu < 0 then
+            u.energyupkeep = eu * factor
+        elseif eu > 0 then
+            u.energyupkeep = eu * inv
+        end
+    end
+
+    if type(u.customparams) == 'table' then
+        local cap_v = u.customparams.energyconv_capacity
+        local cap_n = tonumber(cap_v)
+        if cap_n then
+            local scaled_cap = ceil(cap_n * factor)
+            if type(cap_v) == 'string' then
+                u.customparams.energyconv_capacity = tostring(scaled_cap)
+            else
+                u.customparams.energyconv_capacity = scaled_cap
+            end
+        end
+
+        local v = u.customparams.energyconv_efficiency
+        local n = tonumber(v)
+        if n then
+            local scaled = n * factor
+            if type(v) == 'string' then
+                u.customparams.energyconv_efficiency = tostring(scaled)
+            else
+                u.customparams.energyconv_efficiency = scaled
+            end
+        end
+    end
+
+    -- Costs/build time:
+    local costInv = inv
+    if inv < 1 then
+        costInv = 1 + ((inv - 1) * 0.25)
+    end
+
+    mulceil('buildtime', costInv)
+    mulceil('buildcostmetal', costInv)
+    mulceil('buildcostenergy', costInv)
+    mulceil('metalcost', costInv)
+    mulceil('energycost', costInv)
+
+    local weaponBuff = factor
+    if(factor > 1) then
+        weaponBuff = factor * 0.5
+    end
+
+    -- Weapon stats: 
+    if unit.weapondefs and type(unit.weapondefs) == 'table' then
+        for _, wd in pairs(unit.weapondefs) do
+            if type(wd) == 'table' then
+                if type(wd.reloadtime) == 'number' then
+                    wd.reloadtime = wd.reloadtime * (1 / weaponBuff)
+                end
+                if type(wd.range) == 'number' then
+                    wd.range = wd.range * factor
+                elseif type(wd.weaponrange) == 'number' then
+                    wd.weaponrange = wd.weaponrange * factor
+                end
+                if wd.damage and type(wd.damage) == 'table' then
+                    for dt, dv in pairs(wd.damage) do
+                        if type(dv) == 'number' then
+                            wd.damage[dt] = dv * weaponBuff
+                        end
+                    end
+                end
+                -- Weapon specific buffs
+            end
+        end
+    end
+end
 local function serialize_modded_stats(ms)
     if type(ms) ~= 'table' then return nil end
 
     local parts = {}
+
+    if ms.all_stats ~= nil then
+        table.insert(parts, 'all_stats:' .. tostring(ms.all_stats))
+    end
 
     if type(ms.basic) == 'table' then
         local basic_parts = {}
@@ -61,6 +202,14 @@ local function apply_buffered_modded_stats(name, unit)
     end
     if ms.description ~= nil then
         unit.customparams.modded_description = tostring(ms.description)
+    end
+
+    -- Expand tier shorthand (if present) before applying any direct overrides.
+    if ms.all_stats ~= nil then
+        local factors = parse_all_stats_factors(ms.all_stats)
+        for _, f in ipairs(factors) do
+            scale_all_stats(name, unit, f)
+        end
     end
 
     if type(ms.basic) == 'table' then
@@ -139,6 +288,19 @@ for name, ud in pairs(UnitDefs) do
             end
 
             ud.customparams['i18n_en_humanname'] = title .. baseHumanName
+
+            -- If this unit has metal-maker style conversion params, append a human-readable summary.
+            local eff = ud.customparams and tonumber(ud.customparams.energyconv_efficiency)
+            if eff and eff > 0 then
+                local energy_per_metal = math.ceil(1 / eff)
+                local conv_line = "Converts " .. tostring(energy_per_metal) .. " energy to 1 metal"
+                if desc and desc ~= '' then
+                    desc = desc .. "\n" .. conv_line
+                else
+                    desc = conv_line
+                end
+            end
+
             if desc and desc ~= '' then
                 ud.customparams['i18n_en_tooltip'] = desc
             end

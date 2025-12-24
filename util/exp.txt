@@ -1,0 +1,43 @@
+"armcomboss": "Epic Commander - Final Boss",
+"armscavengerbossv2_epic": "Epic Commander - Final Boss",
+
+"armanavaldefturret": "Liquifier", -- anti ship t2
+"armannit3": "Epic Pulsar", t4
+"armbotrail": "Pawn Launcher", t4
+"armfgate": "Aurora", -- naval shield t2
+"armgatet3": "Asylum",
+"armgplat": "Gun Platform", t1
+"armminivulc": "Mini Ragnarok", t3
+"armsat": "Satellite", - t4 scout unit
+"armrattet4": "Ratte", t4 
+"armnavaldefturret": "Cauteriser",
+
+"armdecadet3": "Epic Dolphin",
+"armdronecarry": "Nexus",
+"armdronecarryland": "Nexus Terra",
+"armexcalibur": "Excalibur", -- sub
+"armpshipt3": "Epic Ellysaw",
+"armptt2": "Epic Skater", t3
+"armpwt4": "Epic Pawn", t4
+"armsfig2": "Cyclone", t2 seaplane fighter
+"armsptkt4": "Epic Recluse",
+"armtdrone": "Depth Charge Drone",
+"armvadert4": "Epic Tumbleweed",
+"armzapper": "Zapper",
+
+
+"armmmkrt3": "Epic Energy Converter",
+"armwint2": "Advanced Wind Turbine",
+"armrectrt4": "Epic Rector",
+"armapt3": "Experimental Aircraft Plant",
+"armhaca": "Experimental Construction Aircraft", -- change buildings
+"armnanotct2": "Advanced Construction Turret", t3 con turret
+"armrespawn": "Base Builder", - t4 con turret
+
+"armassimilator": "Assimilator",
+
+
+"freefusion": "Free Fusion Reactor",
+			"lootboxbronze": "Bronze Resource Generator",
+			"lootboxgold": "Gold Resource Generator",
+"scavengerbossv4": "Epic Commander - Final Boss",

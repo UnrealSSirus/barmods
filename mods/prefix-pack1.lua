@@ -22,6 +22,9 @@ local PREFIX_CONFIG = {
     { id = 'blind',    fn = 'blind',    weight = 5,  label = 'Blind' }, -- Reduces LOS
 }
 
+ -- forgetful, randomly loses build options
+ -- replicating, builds a copy of itself
+
 local function ensure_modded_stats(unit)
     unit.customparams = unit.customparams or {}
     local ms = unit.customparams.modded_stats
