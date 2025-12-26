@@ -1,6 +1,5 @@
--- Attributes Resolver v1.3
+-- Attributes Resolver v1.5
 local function parse_all_stats_factors(v)
-    -- Accept number | string (space-separated) | table (numbers/strings).
     local factors = {}
     local function push(x)
         local n = tonumber(x)
@@ -24,7 +23,16 @@ local function parse_all_stats_factors(v)
     return factors
 end
 
-local SOLAR_UPKEEP_UNITS = "|armadvsol|legsolar|corsolar|armsolar|legadvsol|coradvsol|" -- temp test
+local EXCLUDE_FOOTPRINT_UNITS = "|armmex|armamex|armmoho|armuwmme|cormex|cormexp|cormoho|coruwmme|legmex|legmext15|legmoho|leganavalmex|armgmm|"
+local function is_footprint_excluded(unitName)
+    if type(unitName) ~= 'string' or unitName == '' then return false end
+    -- Exclude any unit id containing 'geo'
+    if string.find(unitName, "geo", 1, true) then
+        return true
+    end
+    -- Exclude explicit list
+    return string.find(EXCLUDE_FOOTPRINT_UNITS, "|" .. unitName .. "|", 1, true) ~= nil
+end
 
 local function scale_all_stats(name, unit, factor)
     if type(factor) ~= 'number' then return end
@@ -50,10 +58,10 @@ local function scale_all_stats(name, unit, factor)
     }) do
         mul(k, factor)
     end
-    mul('speed', factor * 0.5)
-    mulceil('cloakcost', 1 - factor)
-    mulceil('cloakcostmoving', 1 - factor)
-    if u.footprintx and u.footprintz then
+    mul('speed', 1 + ((factor - 1) * 0.5))
+    mulceil('cloakcost', inv)
+    mulceil('cloakcostmoving', inv)
+    if u.footprintx and u.footprintz and (not is_footprint_excluded(name)) then
         u.footprintx = ceil(u.footprintx / factor)
         u.footprintz = ceil(u.footprintz / factor)
     end
@@ -107,9 +115,10 @@ local function scale_all_stats(name, unit, factor)
     mulceil('metalcost', costInv)
     mulceil('energycost', costInv)
 
+    -- Same idea as speed: half-strength weapon buff should not become a nerf for 1 < factor < 2.
     local weaponBuff = factor
-    if(factor > 1) then
-        weaponBuff = factor * 0.5
+    if (factor > 1) then
+        weaponBuff = 1 + ((factor - 1) * 0.5)
     end
 
     -- Weapon stats: 

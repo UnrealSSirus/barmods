@@ -17,7 +17,7 @@ local PREFIX_CONFIG = {
     { id = 'speedy',    fn = 'speedy',    weight = 10,  label = 'Speedy' }, -- Increases speedy
     { id = 'regenerative',    fn = 'regenerative',    weight = 10,  label = 'Regenerative' }, -- Increases regenerative
     { id = 'jamming',    fn = 'jamming',    weight = 1,  label = 'Jamming' }, -- Jams radars and sonars
-    { id = 'explosive',    fn = 'explosive',    weight = 10,  label = 'Explosive' }, -- Increases explosive damage
+    { id = 'explosive',    fn = 'explosive',    weight = 1,  label = 'Explosive' }, -- Increases explosive damage
     { id = 'resourceful',    fn = 'resourceful',    weight = 5,  label = 'Resourceful' }, -- Increases resource gathering
     { id = 'blind',    fn = 'blind',    weight = 5,  label = 'Blind' }, -- Reduces LOS
 }
